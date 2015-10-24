@@ -1,6 +1,7 @@
 import re
 import os.path
 from time import time
+from trac.versioncontrol.api import RepositoryManager
 from code_comments.api import CodeCommentSystem
 from code_comments.comment import Comment
 
@@ -128,11 +129,14 @@ class Comments:
         return comment_id[0]
 
     def get_repo_name(self):
+        all_repos = RepositoryManager(self.env).get_all_repositories()
         http_ref = self.req.environ["HTTP_REFERER"]
         browser_and_repo_name = re.search('(browser\/)\w+', http_ref)
         if browser_and_repo_name is not None:
             browser_and_repo_name = browser_and_repo_name.group(0)
             repo_name = browser_and_repo_name.rsplit('/', 1)[1]
+            if repo_name not in all_repos:
+                repo_name = ''
         else:
             repo_name = 'None'
         return repo_name
