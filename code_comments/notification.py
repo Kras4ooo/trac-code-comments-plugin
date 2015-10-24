@@ -1,3 +1,5 @@
+from urlparse import urlparse
+
 from trac.config import BoolOption
 from trac.core import Component, implements
 from trac.notification import NotifyEmail
@@ -94,10 +96,12 @@ class CodeCommentNotifyEmail(NotifyEmail):
 
     def notify(self, comment):
         self.comment_author = self._get_author_name(comment)
+        parsed_uri = urlparse(self.env.abs_href())
+        domain = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
 
         self.data.update({
             "comment": comment,
-            "comment_url": self.env.abs_href() + comment.href(),
+            "comment_url": domain + comment.href(),
             "project_url": self.env.project_url or self.env.abs_href(),
         })
 
