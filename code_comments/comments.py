@@ -1,3 +1,4 @@
+import re
 import os.path
 from time import time
 from code_comments.api import CodeCommentSystem
@@ -105,12 +106,14 @@ class Comments:
         return conditions_str, values
 
     def create(self, args):
+        args['repo'] = self.get_repo_name()
         comment = Comment(self.req, self.env, args)
         comment.validate()
         comment.time = int(time())
         column_names_to_insert = [column_name for column_name in comment.columns if column_name != 'id']
         values = [getattr(comment, column_name) for column_name in column_names_to_insert]
         comment_id = [None]
+
         @self.env.with_transaction()
         def insert_comment(db):
             cursor = db.cursor()
@@ -123,3 +126,23 @@ class Comments:
             Comments(self.req, self.env).by_id(comment_id[0]))
 
         return comment_id[0]
+
+    def get_repo_name(self):
+        http_ref = self.req.environ["HTTP_REFERER"]
+        browser_and_repo_name = re.search('(browser\/)\w+', http_ref)
+        if browser_and_repo_name is not None:
+            browser_and_repo_name = browser_and_repo_name.group(0)
+            repo_name = browser_and_repo_name.rsplit('/', 1)[1]
+        else:
+            repo_name = 'None'
+        return repo_name
+"""
+def get_repo_name(self):
+        reponame = self.req.args.get('reponame')
+        rm = RepositoryManager(self.env)
+        repos = rm.get_repository(reponame)
+
+        path = self.req.args.get('path') or ''
+        rev = self.req.args.get('rev') or repos.youngest_rev
+        return reponame
+"""
